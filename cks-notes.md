@@ -180,3 +180,20 @@ ingress:
   - ipBlock:
       cidr: 192.168.5.10/32
 ```
+
+d. Sending traffic from "DB" pod to a backup server 
+```yaml
+policyTypes:
+- Ingress
+- Egress
+egress:
+- to:
+  - ipBlock:
+      cidr: 192.168.5.10/32
+```
+
+## Ingress
+
+Ingress Controller => Nginx // Countour // HAProxy 
+Deploying nginx-controller => deployment && configmap for configuration && service && auth: serviceaccount (roles,clusteroles,rolebindings)
+Ingress Resource => CR of kind: Ingress (backend.serviceName/servicePort)
