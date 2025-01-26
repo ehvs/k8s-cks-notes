@@ -17,6 +17,7 @@ Asymmetric Encryption, pair of keys (Private and Public).
 
 ### K8S + TLS
 
+```
 ======== Server Certs
 kube-api-server
 etcd 
@@ -29,6 +30,7 @@ kube-scheduler
 kube-controller-manager
 kube-proxy
 ========
+```
 
 ## KubeConfig
 Path: `~/.kube/config`
@@ -58,7 +60,9 @@ Attribute Based -
 2. Mount the volumePath and volumes.
 
 .jsonl 
-```{"apiVersion": "abac.authorization.kubernetes.io/v1beta1", "kind": "Policy", "spec": {"user":"scheduler", "namespace": "*",              "resource": "bindings"                                     }}```
+```json
+{"apiVersion": "abac.authorization.kubernetes.io/v1beta1", "kind": "Policy", "spec": {"user":"scheduler", "namespace": "*",              "resource": "bindings"                                     }}
+```
 
 # Kubelet Security
 - Authentication => Certificates x509 OR API Bearer Tokens
