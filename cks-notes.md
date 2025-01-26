@@ -87,3 +87,96 @@ curl http://localhost:<localport>
 ```
 
 
+# Upgrading - per node/inside the host
+
+- Verify the repository from the package manager, edit the file accordingly and fetch the new available version.
+```
+vim /etc/apt/sources.list.d/kubernetes.list
+apt update
+apt-cache madison kubeadm
+```
+- Running pre-flight checks: `kubeadm upgrade plan v.1.YY.Z`
+
+## Control plane
+1. Upgrade the `kubeadm` package
+1. Upgrade "cluster components": `kubeadm upgrade apply v.1.YY.Z`
+1. Upgrade the `kubelet` package
+1. Restart the service `systemctl restart kubelet`
+
+## Workers
+- Before starting, **drain the node**.
+1. Upgrade the `kubeadm` package
+1. Upgrade the `kubelet` package
+1. Upgrade "worker components": `kubeadm upgrade  node`
+1. Restart the service `systemctl restart kubelet`
+- Once finished, **uncordon**.
+
+# Networking - Ingress/Egress and Network Policies
+
+It is all about POV *Point of View*.  
+
+Given a certain pod A, the traffic that ARRIVES to the pod A is the INGRESS. The traffic that leaves pod A is the EGRESS.
+
+## Network Policies
+
+- In the NetPol manifest, both `policyTypes` (Ingress and Egress) must be set to ensure isolation.
+
+### Context
+
+Pod "db" and "api" are both hosted in namespace "myapp"
+
+#### Scenarios:
+a. Isolating pod "db" to **only** receive ingress traffic from pod "api" that is hosted in namespace: "myapp"
+
+**NOTE** the identation, where the `-` indicates that it is all part of one single rule.
+```yaml
+policyTypes:
+  - Ingress
+ingress:
+- from:
+  - podSelector:
+      matchLabels:
+        name: api
+    namespaceSelector:
+      matchLabels:
+        name: myapp
+```
+b. Isolating pod "db" to only receive ingress from pod "api" &&  from any pods in namespace "test-app"
+
+*This means that the "db" pod will receive traffic from the "api" pod, that lives in the same namespace as "db", and also receive ingress traffic from any pod in ns/"test-app"*
+
+**NOTE** the identation, where the `-` indicates that there are **two** rules.
+
+```yaml
+policyTypes:
+- Ingress
+ingress:
+- from:
+  - podSelector:
+      matchLabels:
+        name: api
+  - namespaceSelector:
+      matchLabels:
+        name: test-app
+```
+
+c. Isolating pod "db" to only receive ingress from pod "api" &&  from any pods in namespace "test-app" && from an external server IP.
+
+*This means that the "db" pod will receive traffic from the "api" pod, that lives in the same namespace as "db", and also receive ingress traffic from any pod in ns/"test-app" AND also receives ingress trafic from an external server*
+
+**NOTE** the identation, where the `-` indicates that there are **three** rules.
+
+```yaml
+policyTypes:
+- Ingress
+ingress:
+- from:
+  - podSelector:
+      matchLabels:
+        name: api
+  - namespaceSelector:
+      matchLabels:
+        name: test-app
+  - ipBlock:
+      cidr: 192.168.5.10/32
+```
